@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import argparse
+import base64
+import hmac
 import json
+import os
 import sqlite3
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -10,6 +13,8 @@ from urllib.parse import parse_qs, urlparse
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "database" / "jinguan.sqlite3"
 FRONTEND_ROOT = ROOT / "frontend"
+AUTH_USER = os.environ.get("JINGUAN_WEB_USER")
+AUTH_PASSWORD = os.environ.get("JINGUAN_WEB_PASSWORD")
 
 
 def connect_db():
@@ -50,6 +55,36 @@ class JinguanHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(FRONTEND_ROOT), **kwargs)
 
+    def require_auth(self):
+        if not AUTH_USER and not AUTH_PASSWORD:
+            return True
+        header = self.headers.get("Authorization", "")
+        prefix = "Basic "
+        if not header.startswith(prefix):
+            self.send_auth_required()
+            return False
+        try:
+            decoded = base64.b64decode(header[len(prefix) :], validate=True).decode("utf-8")
+            username, password = decoded.split(":", 1)
+        except Exception:
+            self.send_auth_required()
+            return False
+        expected_user = AUTH_USER or "jinguan"
+        expected_password = AUTH_PASSWORD or ""
+        if hmac.compare_digest(username, expected_user) and hmac.compare_digest(password, expected_password):
+            return True
+        self.send_auth_required()
+        return False
+
+    def send_auth_required(self):
+        body = b"Authentication required"
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="Jinguan"')
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def send_json(self, payload, status=200):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -62,6 +97,8 @@ class JinguanHandler(SimpleHTTPRequestHandler):
         self.send_json({"error": message}, status)
 
     def do_GET(self):
+        if not self.require_auth():
+            return
         parsed = urlparse(self.path)
         if not parsed.path.startswith("/api/"):
             return super().do_GET()
