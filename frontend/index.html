@@ -17,6 +17,7 @@
     </div>
     <nav class="nav">
       <button class="nav-item active" data-view="overview">总览</button>
+      <button class="nav-item" data-view="inspect">流水线检查</button>
       <button class="nav-item" data-view="tables">数据表</button>
       <button class="nav-item" data-view="query">查询</button>
     </nav>
@@ -69,6 +70,55 @@
           </div>
           <div id="issuesList" class="status-list"></div>
         </section>
+      </div>
+    </section>
+
+    <section class="view" id="inspectView">
+      <div class="inspect-layout">
+        <aside class="run-list" id="runList"></aside>
+
+        <section class="inspect-main">
+          <section class="panel">
+            <div class="panel-head split">
+              <div>
+                <h3 id="inspectRunTitle">选择运行任务</h3>
+                <p id="inspectRunMeta"></p>
+              </div>
+              <span class="status-pill" id="inspectRunStatus">-</span>
+            </div>
+            <div class="flow" id="pipelineFlow"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head split">
+              <div>
+                <h3>解析表格与路由</h3>
+                <p id="tableInspectMeta"></p>
+              </div>
+              <select id="parsedTableSelect" aria-label="选择解析表格"></select>
+            </div>
+            <div class="table-inspector">
+              <div class="markdown-preview" id="markdownPreview"></div>
+              <div class="route-detail" id="routeDetail"></div>
+            </div>
+          </section>
+        </section>
+
+        <aside class="inspect-side">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>事件日志</h3>
+            </div>
+            <div class="timeline" id="eventTimeline"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>校验问题</h3>
+            </div>
+            <div class="issue-feed" id="issueFeed"></div>
+          </section>
+        </aside>
       </div>
     </section>
 

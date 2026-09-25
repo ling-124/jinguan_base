@@ -75,6 +75,8 @@ class JinguanHandler(SimpleHTTPRequestHandler):
                 self.handle_tables()
             elif parsed.path == "/api/table":
                 self.handle_table(parsed.query)
+            elif parsed.path == "/api/inspection":
+                self.handle_inspection(parsed.query)
             elif parsed.path == "/api/query":
                 self.handle_query(parsed.query)
             else:
@@ -166,6 +168,86 @@ class JinguanHandler(SimpleHTTPRequestHandler):
                 "limit": limit,
                 "offset": offset,
                 "total": total,
+            }
+        )
+
+    def handle_inspection(self, query):
+        qs = parse_qs(query)
+        run_id = qs.get("run_id", [""])[0]
+        runs = query_db(
+            """
+            SELECT run_id, status, paper_id, title, extraction_schema,
+                   parsed_table_count, extracted_record_count,
+                   validation_issue_count, created_at
+            FROM v_run_overview
+            ORDER BY created_at DESC
+            LIMIT 50
+            """
+        )
+        if not run_id and runs:
+            run_id = runs[0]["run_id"]
+
+        run = None
+        parsed_tables = []
+        events = []
+        issues = []
+        if run_id:
+            run = query_db(
+                """
+                SELECT r.*, p.title, p.doi, p.journal, p.publication_year,
+                       pa.sha256 AS pdf_sha256, pa.storage_key AS pdf_storage_key,
+                       pa.byte_size AS pdf_byte_size,
+                       s.name || '-' || s.version AS extraction_schema
+                FROM runs r
+                JOIN papers p ON p.paper_id = r.paper_id
+                JOIN extraction_schemas s ON s.schema_id = r.schema_id
+                LEFT JOIN pdf_assets pa ON pa.asset_id = r.asset_id
+                WHERE r.run_id = ?
+                """,
+                (run_id,),
+            )
+            run = run[0] if run else None
+            parsed_tables = query_db(
+                """
+                SELECT pt.table_id, pt.page_start, pt.page_end, pt.expected_rows,
+                       pt.expected_columns, pt.parser_name, pt.markdown,
+                       pt.parsed_payload, rd.route_id, rd.format_label,
+                       rd.confidence, rd.reason, rd.features_json,
+                       rd.template_version_id
+                FROM parsed_tables pt
+                LEFT JOIN route_decisions rd ON rd.table_id = pt.table_id
+                WHERE pt.run_id = ?
+                ORDER BY pt.created_at, pt.table_id
+                """,
+                (run_id,),
+            )
+            events = query_db(
+                """
+                SELECT stage, level, message, payload, created_at
+                FROM run_events
+                WHERE run_id = ?
+                ORDER BY created_at, event_id
+                """,
+                (run_id,),
+            )
+            issues = query_db(
+                """
+                SELECT layer, severity, rule_code, message, expected, actual, created_at
+                FROM validation_issues
+                WHERE run_id = ?
+                ORDER BY created_at, issue_id
+                """,
+                (run_id,),
+            )
+
+        self.send_json(
+            {
+                "runs": runs,
+                "selected_run_id": run_id,
+                "run": run,
+                "parsed_tables": parsed_tables,
+                "events": events,
+                "issues": issues,
             }
         )
 

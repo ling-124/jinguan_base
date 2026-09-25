@@ -28,7 +28,8 @@ body {
 }
 
 button,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -42,6 +43,15 @@ button {
 button:hover {
   border-color: var(--accent);
   color: var(--accent-strong);
+}
+
+select {
+  min-height: 36px;
+  max-width: 260px;
+  padding: 0 34px 0 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .sidebar {
@@ -342,6 +352,221 @@ textarea {
   font-size: 12px;
 }
 
+.inspect-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.run-list,
+.inspect-side {
+  display: grid;
+  gap: 12px;
+}
+
+.run-list {
+  max-height: calc(100vh - 122px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.run-list button {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 12px 13px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.run-list button.active {
+  background: #e4efec;
+  color: var(--accent-strong);
+}
+
+.run-list strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.run-list span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.inspect-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.status-pill,
+.route-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  background: #e7ecee;
+  color: #344247;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-pill.passed {
+  background: #dceee5;
+  color: #14653a;
+}
+
+.status-pill.needs_review,
+.status-pill.pending {
+  background: #f4e8d2;
+  color: var(--warn);
+}
+
+.status-pill.failed,
+.status-pill.cancelled {
+  background: #f4dddd;
+  color: var(--danger);
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+  padding: 16px;
+}
+
+.flow-step {
+  min-height: 92px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  background: #f8fbfb;
+}
+
+.flow-step.done {
+  border-color: #97c9b2;
+  background: #edf7f1;
+}
+
+.flow-step.waiting {
+  color: var(--muted);
+}
+
+.flow-step span,
+.flow-step strong,
+.flow-step em {
+  display: block;
+}
+
+.flow-step span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.flow-step strong {
+  margin-top: 9px;
+  font-size: 16px;
+}
+
+.flow-step em {
+  margin-top: 4px;
+  font-style: normal;
+  font-size: 12px;
+}
+
+.table-inspector {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+  gap: 16px;
+  padding: 16px;
+}
+
+.markdown-preview {
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: #fbfdfd;
+  overflow: auto;
+}
+
+.route-detail {
+  border-left: 1px solid var(--line);
+  padding-left: 16px;
+}
+
+.route-detail dl {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.route-detail dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.route-detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.timeline,
+.issue-feed {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.timeline-item,
+.issue-item {
+  display: grid;
+  gap: 5px;
+  padding: 10px 0 10px 12px;
+  border-left: 3px solid var(--line);
+}
+
+.timeline-item.error,
+.issue-item.error,
+.issue-item.fatal {
+  border-left-color: var(--danger);
+}
+
+.timeline-item.warning,
+.issue-item.warning {
+  border-left-color: var(--warn);
+}
+
+.timeline-item span,
+.timeline-item em,
+.issue-item span {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.timeline-item strong,
+.issue-item strong {
+  font-size: 13px;
+}
+
+.issue-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.empty-block {
+  padding: 22px;
+  color: var(--muted);
+  text-align: center;
+}
+
 .error {
   color: var(--danger);
 }
@@ -357,17 +582,30 @@ textarea {
   }
 
   .nav {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .panel-grid,
-  .workspace {
+  .workspace,
+  .inspect-layout,
+  .table-inspector {
     grid-template-columns: 1fr;
   }
 
-  .table-list {
+  .table-list,
+  .run-list {
     height: auto;
     max-height: 260px;
+  }
+
+  .flow {
+    grid-template-columns: 1fr;
+  }
+
+  .route-detail {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    padding: 16px 0 0;
   }
 
   .shell {
